@@ -118,6 +118,12 @@ class AgentsConfig:
     graze_rate: float = 0.05
     graze_efficiency: float = 1.0
     spawn_attempts: int = 5
+    # Stage 3 (reproduction & genome)
+    repro_threshold: float = 10.0
+    offspring_share: float = 0.5  # fraction of parent's energy given to offspring
+    mutation_sigma: float = 0.05
+    genome_size: int = 32
+    max_age: int = 0  # 0 disables age-based death
 
 
 def _agents_from_dict(d: Dict[str, Any]) -> AgentsConfig:
@@ -131,6 +137,11 @@ def _agents_from_dict(d: Dict[str, Any]) -> AgentsConfig:
         graze_rate=float(d.get("graze_rate", 0.05)),
         graze_efficiency=float(d.get("graze_efficiency", 1.0)),
         spawn_attempts=int(d.get("spawn_attempts", 5)),
+        repro_threshold=float(d.get("repro_threshold", 10.0)),
+        offspring_share=float(d.get("offspring_share", 0.5)),
+        mutation_sigma=float(d.get("mutation_sigma", 0.05)),
+        genome_size=int(d.get("genome_size", 32)),
+        max_age=int(d.get("max_age", 0)),
     )
 
 

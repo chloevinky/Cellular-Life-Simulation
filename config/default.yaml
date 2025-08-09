@@ -2,15 +2,15 @@ world:
   width: 200
   height: 150
   torus: true
-  regrow_rate: 0.008
-  diffusion_rate: 0.05
+  regrow_rate: 0.010
+  diffusion_rate: 0.03
   max_resource: 1.0
   season:
     amplitude: 0.3
     period_steps: 2000
   disturbance:
-    prob_per_step: 0.01
-    patch_radius: 8
+    prob_per_step: 0.02
+    patch_radius: 10
     magnitude: 1.0
     mode: reset
 sim:
@@ -20,15 +20,21 @@ sim:
   seed: 12345
 agents:
   init_population: 400
-  max_population: 2000
+  max_population: 1200
   init_energy: 6.0
-  metabolism: 0.075
-  move_cost: 0.015
-  graze_rate: 0.05
+  metabolism: 0.045
+  move_cost: 0.010
+  graze_rate: 0.12
   graze_efficiency: 1.0
   spawn_attempts: 5
+  # Stage 3: reproduction & genome
+  repro_threshold: 7.5
+  offspring_share: 0.40
+  mutation_sigma: 0.07
+  genome_size: 32
+  max_age: 6000
 view:
-  cell_size: 4
+  cell_size: 6
   fps: 60
   show_grid: false
-  title: "Cellular Life: Stage 1"
+  title: "Cellular Life: Stage 3"

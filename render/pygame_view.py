@@ -80,21 +80,30 @@ class PygameView:
             surf = pygame.transform.scale(surf, self.size_px)
         self.screen.blit(surf, (0, 0))
 
-    def _draw_agents(self, positions: list[tuple[int, int]]) -> None:
+    def _draw_agents(self, positions: list[tuple[int, int]], colors: Optional[list[tuple[int, int, int]]] = None) -> None:
         if not positions:
             return
         cs = self.cell
-        color = (255, 255, 255)
+        default_color = (255, 255, 255)
         if cs <= 2:
             # draw as single pixels (scaled surface already)
-            for (y, x) in positions:
-                self.screen.set_at((x * cs, y * cs), color)
+            if colors is None:
+                for (y, x) in positions:
+                    self.screen.set_at((x * cs, y * cs), default_color)
+            else:
+                for (y, x), col in zip(positions, colors):
+                    self.screen.set_at((x * cs, y * cs), col)
         else:
-            for (y, x) in positions:
-                rect = pygame.Rect(x * cs, y * cs, cs, cs)
-                pygame.draw.rect(self.screen, color, rect)
+            if colors is None:
+                for (y, x) in positions:
+                    rect = pygame.Rect(x * cs, y * cs, cs, cs)
+                    pygame.draw.rect(self.screen, default_color, rect)
+            else:
+                for (y, x), col in zip(positions, colors):
+                    rect = pygame.Rect(x * cs, y * cs, cs, cs)
+                    pygame.draw.rect(self.screen, col, rect)
 
-    def _draw_hud(self, fps_val: Optional[float], step: Optional[int]) -> None:
+    def _draw_hud(self, fps_val: Optional[float], step: Optional[int], pop: Optional[int] = None) -> None:
         if self.font is None:
             return
         hud_lines = []
@@ -102,6 +111,8 @@ class PygameView:
             hud_lines.append(f"step: {step}")
         if fps_val is not None:
             hud_lines.append(f"fps: {fps_val:.1f}")
+        if pop is not None:
+            hud_lines.append(f"pop: {pop}")
         if hud_lines:
             hud_text = "  ".join(hud_lines)
             text_surf = self.font.render(hud_text, True, (255, 255, 255))
@@ -113,10 +124,10 @@ class PygameView:
         self._draw_hud(fps_val, step)
         pygame.display.flip()
 
-    def render(self, resource: np.ndarray, max_resource: float, positions: list[tuple[int, int]], fps_val: Optional[float] = None, step: Optional[int] = None) -> None:
+    def render(self, resource: np.ndarray, max_resource: float, positions: list[tuple[int, int]], colors: Optional[list[tuple[int, int, int]]] = None, fps_val: Optional[float] = None, step: Optional[int] = None, pop: Optional[int] = None) -> None:
         self._draw_resource(resource, max_resource)
-        self._draw_agents(positions)
-        self._draw_hud(fps_val, step)
+        self._draw_agents(positions, colors)
+        self._draw_hud(fps_val, step, pop)
         pygame.display.flip()
 
     def tick(self) -> float:
