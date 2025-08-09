@@ -2,147 +2,182 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import yaml
-
-
-@dataclass
-class SeasonConfig:
-    amplitude: float = 0.0
-    period_steps: int = 0
-
-
-@dataclass
-class DisturbanceConfig:
-    prob_per_step: float = 0.0
-    patch_radius: int = 0
-    magnitude: float = 1.0
-    mode: str = "reset"  # reset | spike (not used yet)
 
 
 @dataclass
 class WorldConfig:
     width: int
     height: int
-    torus: bool = True
-    regrow_rate: float = 0.02
-    diffusion_rate: float = 0.10
-    max_resource: float = 1.0
-    season: SeasonConfig = SeasonConfig()
-    disturbance: DisturbanceConfig = DisturbanceConfig()
+    
 
 
 @dataclass
 class SimConfig:
-    steps: int = 100000
-    render_every: int = 1
-    log_every: int = 50
     seed: int = 12345
+    render_every: int = 2  # how many ticks per render
+    max_plants: int = 4000
+    stats_interval: int = 10
+    initial_plants: int = 100
+    reproduction_chance: float = 0.05  # per-tick prob when can_reproduce
+    max_age: int = 1000
 
 
 @dataclass
 class ViewConfig:
-    cell_size: int = 4
-    fps: int = 60
-    show_grid: bool = False
-    title: str = "Cellular Life: Stage 1"
+    window_width: int = 640
+    window_height: int = 640
+    fps: int = 30
+    title: str = "Cellular Life: Plants MVP"
 
 
 @dataclass
 class Config:
     world: WorldConfig
     sim: SimConfig
-    agents: "AgentsConfig"
     view: ViewConfig
+    plants: "PlantConfig"
 
 
-def _season_from_dict(d: Dict[str, Any] | None) -> SeasonConfig:
-    d = d or {}
-    return SeasonConfig(
-        amplitude=float(d.get("amplitude", 0.0)),
-        period_steps=int(d.get("period_steps", 0)),
-    )
+@dataclass
+class PlantInitConfig:
+    temp_optimum: Tuple[float, float] = (0.0, 1.0)
+    temp_tolerance: Tuple[float, float] = (0.1, 0.5)
+    shade_tolerance: Tuple[float, float] = (0.0, 1.0)
+    water_efficiency: Tuple[float, float] = (0.0, 1.0)
+    growth_rate: Tuple[float, float] = (0.2, 0.8)
+    photosynthesis_rate: Tuple[float, float] = (0.2, 0.8)
+    maintenance_cost: Tuple[float, float] = (0.05, 0.2)
+    max_size: Tuple[float, float] = (5.0, 20.0)
+    repro_threshold: Tuple[float, float] = (3.0, 10.0)
+    seed_dispersal: Tuple[float, float] = (1.0, 6.0)
+    seed_energy: Tuple[float, float] = (0.5, 2.5)
+    initial_energy: Tuple[float, float] = (1.0, 3.0)
 
 
-def _disturbance_from_dict(d: Dict[str, Any] | None) -> DisturbanceConfig:
-    d = d or {}
-    return DisturbanceConfig(
-        prob_per_step=float(d.get("prob_per_step", 0.0)),
-        patch_radius=int(d.get("patch_radius", 0)),
-        magnitude=float(d.get("magnitude", 1.0)),
-        mode=str(d.get("mode", "reset")),
-    )
+@dataclass
+class PlantMutationConfig:
+    rate: float = 0.02
+    sigma_traits: float = 0.1
+    sigma_max_size: float = 1.0
+    sigma_seed_energy: float = 0.2
+    clip_traits: Tuple[float, float] = (0.01, 1.0)
+    clip_max_size: Tuple[float, float] = (1.0, 50.0)
+    clip_seed_energy: Tuple[float, float] = (0.5, 5.0)
+
+
+@dataclass
+class PlantConfig:
+    init: PlantInitConfig = PlantInitConfig()
+    mutation: PlantMutationConfig = PlantMutationConfig()
+    physiology: "PlantPhysiologyConfig" = None
+    species: "PlantSpeciesConfig" = None
+
+
+@dataclass
+class PlantPhysiologyConfig:
+    photo_base_mult: float = 2.0
+    nutrient_effect_mult: float = 2.0
+    nutrient_cap: float = 1.0
+    nutrient_consumption_base: float = 0.01
+    water_use_base: float = 0.02
+    shade_cast_coeff: float = 0.5
+    shade_cap: float = 0.9
+    maintenance_size_mult: float = 2.0
+    water_eff_epsilon: float = 0.01
+    low_light_threshold: float = 0.3
+    nutrient_return_mult: float = 0.3
+
+
+@dataclass
+class PlantSpeciesConfig:
+    distance_threshold: float = 0.5
 
 
 def _world_from_dict(d: Dict[str, Any]) -> WorldConfig:
-    season = _season_from_dict(d.get("season"))
-    disturbance = _disturbance_from_dict(d.get("disturbance"))
     return WorldConfig(
         width=int(d.get("width", 160)),
         height=int(d.get("height", 120)),
-        torus=bool(d.get("torus", True)),
-        regrow_rate=float(d.get("regrow_rate", 0.02)),
-        diffusion_rate=float(d.get("diffusion_rate", 0.10)),
-        max_resource=float(d.get("max_resource", 1.0)),
-        season=season,
-        disturbance=disturbance,
     )
 
 
 def _sim_from_dict(d: Dict[str, Any]) -> SimConfig:
     return SimConfig(
-        steps=int(d.get("steps", 100000)),
-        render_every=int(d.get("render_every", 1)),
-        log_every=int(d.get("log_every", 50)),
         seed=int(d.get("seed", 12345)),
+        render_every=int(d.get("render_every", 2)),
+        max_plants=int(d.get("max_plants", 4000)),
+        stats_interval=int(d.get("stats_interval", 10)),
+        initial_plants=int(d.get("initial_plants", 100)),
+        reproduction_chance=float(d.get("reproduction_chance", 0.05)),
+        max_age=int(d.get("max_age", 1000)),
     )
 
 
 def _view_from_dict(d: Dict[str, Any]) -> ViewConfig:
     return ViewConfig(
-        cell_size=int(d.get("cell_size", 5)),
-        fps=int(d.get("fps", 60)),
-        show_grid=bool(d.get("show_grid", False)),
-        title=str(d.get("title", "Cellular Life: Stage 1")),
+        window_width=int(d.get("window_width", 640)),
+        window_height=int(d.get("window_height", 640)),
+        fps=int(d.get("fps", 30)),
+        title=str(d.get("title", "Cellular Life: Plants MVP")),
     )
 
 
-@dataclass
-class AgentsConfig:
-    init_population: int = 400
-    max_population: int = 2000
-    init_energy: float = 5.0
-    metabolism: float = 0.1
-    move_cost: float = 0.02
-    graze_rate: float = 0.05
-    graze_efficiency: float = 1.0
-    spawn_attempts: int = 5
-    # Stage 3 (reproduction & genome)
-    repro_threshold: float = 10.0
-    offspring_share: float = 0.5  # fraction of parent's energy given to offspring
-    mutation_sigma: float = 0.05
-    genome_size: int = 32
-    max_age: int = 0  # 0 disables age-based death
+def _tuple2(v: Any, default: Tuple[float, float]) -> Tuple[float, float]:
+    try:
+        if isinstance(v, (list, tuple)) and len(v) == 2:
+            return float(v[0]), float(v[1])
+    except Exception:
+        pass
+    return default
 
 
-def _agents_from_dict(d: Dict[str, Any]) -> AgentsConfig:
-    d = d or {}
-    return AgentsConfig(
-        init_population=int(d.get("init_population", 400)),
-        max_population=int(d.get("max_population", 2000)),
-        init_energy=float(d.get("init_energy", 5.0)),
-        metabolism=float(d.get("metabolism", 0.1)),
-        move_cost=float(d.get("move_cost", 0.02)),
-        graze_rate=float(d.get("graze_rate", 0.05)),
-        graze_efficiency=float(d.get("graze_efficiency", 1.0)),
-        spawn_attempts=int(d.get("spawn_attempts", 5)),
-        repro_threshold=float(d.get("repro_threshold", 10.0)),
-        offspring_share=float(d.get("offspring_share", 0.5)),
-        mutation_sigma=float(d.get("mutation_sigma", 0.05)),
-        genome_size=int(d.get("genome_size", 32)),
-        max_age=int(d.get("max_age", 0)),
+def _plants_from_dict(d: Dict[str, Any]) -> PlantConfig:
+    init_d = d.get("init", {}) or {}
+    mut_d = d.get("mutation", {}) or {}
+    phys_d = d.get("physiology", {}) or {}
+    spec_d = d.get("species", {}) or {}
+    init = PlantInitConfig(
+        temp_optimum=_tuple2(init_d.get("temp_optimum"), (0.0, 1.0)),
+        temp_tolerance=_tuple2(init_d.get("temp_tolerance"), (0.1, 0.5)),
+        shade_tolerance=_tuple2(init_d.get("shade_tolerance"), (0.0, 1.0)),
+        water_efficiency=_tuple2(init_d.get("water_efficiency"), (0.0, 1.0)),
+        growth_rate=_tuple2(init_d.get("growth_rate"), (0.2, 0.8)),
+        photosynthesis_rate=_tuple2(init_d.get("photosynthesis_rate"), (0.2, 0.8)),
+        maintenance_cost=_tuple2(init_d.get("maintenance_cost"), (0.05, 0.2)),
+        max_size=_tuple2(init_d.get("max_size"), (5.0, 20.0)),
+        repro_threshold=_tuple2(init_d.get("repro_threshold"), (3.0, 10.0)),
+        seed_dispersal=_tuple2(init_d.get("seed_dispersal"), (1.0, 6.0)),
+        seed_energy=_tuple2(init_d.get("seed_energy"), (0.5, 2.5)),
+        initial_energy=_tuple2(init_d.get("initial_energy"), (1.0, 3.0)),
     )
+    mut = PlantMutationConfig(
+        rate=float(mut_d.get("rate", 0.02)),
+        sigma_traits=float(mut_d.get("sigma_traits", 0.1)),
+        sigma_max_size=float(mut_d.get("sigma_max_size", 1.0)),
+        sigma_seed_energy=float(mut_d.get("sigma_seed_energy", 0.2)),
+        clip_traits=_tuple2(mut_d.get("clip_traits"), (0.01, 1.0)),
+        clip_max_size=_tuple2(mut_d.get("clip_max_size"), (1.0, 50.0)),
+        clip_seed_energy=_tuple2(mut_d.get("clip_seed_energy"), (0.5, 5.0)),
+    )
+    phys = PlantPhysiologyConfig(
+        photo_base_mult=float(phys_d.get("photo_base_mult", 2.0)),
+        nutrient_effect_mult=float(phys_d.get("nutrient_effect_mult", 2.0)),
+        nutrient_cap=float(phys_d.get("nutrient_cap", 1.0)),
+        nutrient_consumption_base=float(phys_d.get("nutrient_consumption_base", 0.01)),
+        water_use_base=float(phys_d.get("water_use_base", 0.02)),
+        shade_cast_coeff=float(phys_d.get("shade_cast_coeff", 0.5)),
+        shade_cap=float(phys_d.get("shade_cap", 0.9)),
+        maintenance_size_mult=float(phys_d.get("maintenance_size_mult", 2.0)),
+        water_eff_epsilon=float(phys_d.get("water_eff_epsilon", 0.01)),
+        low_light_threshold=float(phys_d.get("low_light_threshold", 0.3)),
+        nutrient_return_mult=float(phys_d.get("nutrient_return_mult", 0.3)),
+    )
+    species = PlantSpeciesConfig(
+        distance_threshold=float(spec_d.get("distance_threshold", 0.5)),
+    )
+    return PlantConfig(init=init, mutation=mut, physiology=phys, species=species)
 
 
 def load_config(path: str | Path) -> Config:
@@ -154,6 +189,6 @@ def load_config(path: str | Path) -> Config:
 
     world = _world_from_dict(raw.get("world", {}))
     sim = _sim_from_dict(raw.get("sim", {}))
-    agents = _agents_from_dict(raw.get("agents", {}))
     view = _view_from_dict(raw.get("view", {}))
-    return Config(world=world, sim=sim, agents=agents, view=view)
+    plants = _plants_from_dict(raw.get("plants", {}))
+    return Config(world=world, sim=sim, view=view, plants=plants)
