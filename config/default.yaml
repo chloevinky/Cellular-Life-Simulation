@@ -2,7 +2,7 @@ world:
   width: 200
   height: 150
   torus: true
-  regrow_rate: 0.004
+  regrow_rate: 0.008
   diffusion_rate: 0.05
   max_resource: 1.0
   season:
@@ -18,6 +18,15 @@ sim:
   render_every: 1
   log_every: 50
   seed: 12345
+agents:
+  init_population: 400
+  max_population: 2000
+  init_energy: 6.0
+  metabolism: 0.075
+  move_cost: 0.015
+  graze_rate: 0.05
+  graze_efficiency: 1.0
+  spawn_attempts: 5
 view:
   cell_size: 4
   fps: 60

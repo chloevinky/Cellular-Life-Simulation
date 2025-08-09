@@ -53,6 +53,7 @@ class ViewConfig:
 class Config:
     world: WorldConfig
     sim: SimConfig
+    agents: "AgentsConfig"
     view: ViewConfig
 
 
@@ -107,6 +108,32 @@ def _view_from_dict(d: Dict[str, Any]) -> ViewConfig:
     )
 
 
+@dataclass
+class AgentsConfig:
+    init_population: int = 400
+    max_population: int = 2000
+    init_energy: float = 5.0
+    metabolism: float = 0.1
+    move_cost: float = 0.02
+    graze_rate: float = 0.05
+    graze_efficiency: float = 1.0
+    spawn_attempts: int = 5
+
+
+def _agents_from_dict(d: Dict[str, Any]) -> AgentsConfig:
+    d = d or {}
+    return AgentsConfig(
+        init_population=int(d.get("init_population", 400)),
+        max_population=int(d.get("max_population", 2000)),
+        init_energy=float(d.get("init_energy", 5.0)),
+        metabolism=float(d.get("metabolism", 0.1)),
+        move_cost=float(d.get("move_cost", 0.02)),
+        graze_rate=float(d.get("graze_rate", 0.05)),
+        graze_efficiency=float(d.get("graze_efficiency", 1.0)),
+        spawn_attempts=int(d.get("spawn_attempts", 5)),
+    )
+
+
 def load_config(path: str | Path) -> Config:
     p = Path(path)
     if p.is_dir():
@@ -116,5 +143,6 @@ def load_config(path: str | Path) -> Config:
 
     world = _world_from_dict(raw.get("world", {}))
     sim = _sim_from_dict(raw.get("sim", {}))
+    agents = _agents_from_dict(raw.get("agents", {}))
     view = _view_from_dict(raw.get("view", {}))
-    return Config(world=world, sim=sim, view=view)
+    return Config(world=world, sim=sim, agents=agents, view=view)
