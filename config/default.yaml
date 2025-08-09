@@ -1,0 +1,25 @@
+world:
+  width: 200
+  height: 150
+  torus: true
+  regrow_rate: 0.004
+  diffusion_rate: 0.05
+  max_resource: 1.0
+  season:
+    amplitude: 0.3
+    period_steps: 2000
+  disturbance:
+    prob_per_step: 0.01
+    patch_radius: 8
+    magnitude: 1.0
+    mode: reset
+sim:
+  steps: 200000
+  render_every: 1
+  log_every: 50
+  seed: 12345
+view:
+  cell_size: 4
+  fps: 60
+  show_grid: false
+  title: "Cellular Life: Stage 1"
